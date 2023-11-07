@@ -97,9 +97,13 @@ class Visualizer():
             util.mkdirs([self.web_dir, self.img_dir])
         # create a logging file to store training losses
         self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
-        with open(self.log_name, "a") as log_file:
+        self.val_name = os.path.join(opt.checkpoints_dir, opt.name, 'val_log.txt')
+        with open(self.log_name, "w") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)
+        with open(self.val_name, "w") as val_file:
+            now = time.strftime("%c")
+            val_file.write('================ Validating Loss (%s) ================\n' % now)
 
     def reset(self):
         """Reset the self.saved status"""
@@ -248,10 +252,28 @@ class Visualizer():
             t_comp (float) -- computational time per data point (normalized by batch_size)
             t_data (float) -- data loading time per data point (normalized by batch_size)
         """
-        message = '(epoch: %d, iters: %d, time: %.3f, data: %.3f) ' % (epoch, iters, t_comp, t_data)
+        message = 'epoch:%d, iters:%d, time:%.3f, data:%.3f, ' % (epoch, iters, t_comp, t_data)
         for k, v in losses.items():
-            message += '%s: %.3f ' % (k, v)
+            message += '%s:%.3f, ' % (k, v)
 
         print(message)  # print the message
         with open(self.log_name, "a") as log_file:
             log_file.write('%s\n' % message)  # save the message
+
+    def print_val_metrics(self, epoch, losses):
+        """print current losses on console; also save the losses to the disk
+
+        Parameters:
+            epoch (int) -- current epoch
+            iters (int) -- current training iteration during this epoch (reset to 0 at the end of every epoch)
+            losses (OrderedDict) -- training losses stored in the format of (name, float) pairs
+            t_comp (float) -- computational time per data point (normalized by batch_size)
+            t_data (float) -- data loading time per data point (normalized by batch_size)
+        """
+        message = 'epoch:%d, ' % (epoch)
+        for k, v in losses.items():
+            message += '%s:%.3f, ' % (k, v)
+
+        print(message)  # print the message
+        with open(self.val_name, "a") as val_file:
+            val_file.write('%s\n' % message)  # save the message
